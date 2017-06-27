@@ -1,20 +1,12 @@
 package com.diplomatiki.krikonis.rangefinder.app.app;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 import com.android.volley.Request.Method;
 import com.android.volley.Response;
@@ -36,7 +28,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText inputPassword;
     private SessionManager session;
     private SQLiteHandler db;
-
+    private String mUrlString = "http://www.google.gr";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +60,13 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                String email = inputEmail.getText().toString().trim();
-                String password = inputPassword.getText().toString().trim();
+                String email1 = inputEmail.getText().toString().trim();
+                String password1 = inputPassword.getText().toString().trim();
 
                 // Check for empty data in the form
-                if (!email.isEmpty() && !password.isEmpty()) {
+                if (!email1.isEmpty() && !password1.isEmpty()) {
                     // login user
-                    checkLogin(email, password);
+                    checkLogin(email1, password1);
                 } else {
                     // Prompt user to enter credentials
                     Toast.makeText(getApplicationContext(),
@@ -101,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * function to verify login details in mysql db
      * */
-    private void checkLogin(final String email, final String password) {
+    public void checkLogin(final String email1, final String password1) {
         // Tag used to cancel the request
         String tag_string_req = "req_login";
 
@@ -109,10 +101,12 @@ public class LoginActivity extends AppCompatActivity {
         StringRequest strReq = new StringRequest(Method.POST,
                 AppConfig.URL_LOGIN, new Response.Listener<String>() {
 
+
+
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Login Response: " + response.toString());
-
+               // Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
 
                 try {
                     JSONObject jObj = new JSONObject(response);
@@ -166,19 +160,25 @@ public class LoginActivity extends AppCompatActivity {
         }) {
 
             @Override
-            protected Map<String, String> getParams() {
+            public Map<String, String> getParams()  {
                 // Posting parameters to login url
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("email", email);
-                params.put("password", password);
+                params.put("email", email1);
+                params.put("password", password1);
 
                 return params;
             }
+            @Override
+            public Map<String, String> getHeaders() {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
 
+                return headers;
+            }
         };
 
         // Adding request to request queue
-        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+       VolleyController.getInstance(getApplicationContext()).addToRequestQueue(strReq);
     }
 
 
