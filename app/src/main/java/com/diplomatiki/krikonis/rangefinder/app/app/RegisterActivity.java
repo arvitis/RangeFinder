@@ -68,7 +68,7 @@ public class RegisterActivity extends Activity {
         if (session.isLoggedIn()) {
             // User is already logged in. Take him to main activity
             Intent intent = new Intent(RegisterActivity.this,
-                    MainActivity.class);
+                    MapsActivity.class);
             startActivity(intent);
             finish();
         }
@@ -177,7 +177,6 @@ public class RegisterActivity extends Activity {
             }
         });
         // Adding request to request queue
-       // AppController.getInstance().addToRequestQueue(strReq);
         VolleyController.getInstance(getApplicationContext()).addToRequestQueue(strReq);
     }
 
