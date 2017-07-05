@@ -45,7 +45,7 @@
         android:numStars="10"
         android:rating="3"
         android:stepSize="1"
-        android:layout_below="@+id/address"
+        android:layout_below="@+id/proaddress"
         android:layout_centerHorizontal="true" />
 
     <Button
@@ -58,7 +58,7 @@
         android:text="@string/btn_getusers" />
 
     <TextView
-        android:id="@+id/address"
+        android:id="@+id/proaddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:maxLines="2"

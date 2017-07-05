@@ -4,23 +4,31 @@ import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RatingBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +39,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.diplomatiki.krikonis.rangefinder.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -44,51 +53,69 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.widget.TextView;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-public class MapsActivity extends AppCompatActivity implements
+public class ProRegisterActivity extends AppCompatActivity implements
         OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
-    private static final String TAG = MapsActivity.class.getSimpleName();
+        LocationListener, AdapterView.OnItemSelectedListener {
+    private static final String TAG = ProRegisterActivity.class.getSimpleName();
     GoogleMap mGoogleMap;
     SupportMapFragment mapFrag;
     LocationRequest mLocationRequest;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
+    Location initLocation;
     Marker mCurrLocationMarker;
-    public TextView txtName;
+
     public TextView address;
-    public TextView radius;
-    private Button btnLogout;
-    private Button btnGetLoc;
-    private Button btnGetUsers;
+    private EditText inputFullName;
+    private EditText inputEmail;
+    private EditText inputPassword;
+    private EditText inputDescription;
+    private Button btnProRegister;
+    private String provider;
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private SQLiteHandler db;
     private SessionManager session;
-    private RatingBar ratingBar;
     String username;
     String useremail;
-    String useraddress;
+    String Profession;
+
     public double currentLatitude;
     public double currentLongitude;
-    @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+    public boolean GPSenabled;
 
-        getSupportActionBar().setTitle("Map Location Activity");
-        addListenerOnRatingBar();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_pro_register);
+        getSupportActionBar().setTitle("Professional Entry");
+
+        Spinner spinner = (Spinner) findViewById(R.id.prospinner);
+// Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.profession_array, android.R.layout.simple_spinner_item);
+// Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+// Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFrag.getMapAsync(this);
         // Check for enabled GPS
         LocationManager mlocManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         boolean enabled = mlocManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-        if(!enabled) {
+        //Place current location marker
+        if (!enabled) {
+            GPSenabled = false;
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(false);
             builder.setTitle("Location Access");
@@ -97,6 +124,7 @@ public class MapsActivity extends AppCompatActivity implements
                 public void onClick(DialogInterface dialog, int which) {
                     startActivity(
                             new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+
                 }
             });
             builder.setNegativeButton("Ignore", new DialogInterface.OnClickListener() {
@@ -106,23 +134,24 @@ public class MapsActivity extends AppCompatActivity implements
             });
             AlertDialog alert = builder.create();
             alert.show();
-        }
-       // txtName = (TextView) findViewById(R.id.name);
+               }
+
+////////////////////////////////////////////////////////////////////////////////
         address = (TextView) findViewById(R.id.proaddress);
-        radius  = (EditText) findViewById(R.id.radius);
-        btnLogout = (Button) findViewById(R.id.btnLogout);
-        btnGetLoc = (Button) findViewById(R.id.btngetloc);
-        btnGetUsers = (Button) findViewById(R.id.btn_showusers);
+        inputFullName = (EditText) findViewById(R.id.ProName);
+        inputEmail = (EditText) findViewById(R.id.ProEmail);
+        inputPassword = (EditText) findViewById(R.id.ProPassword);
+        inputDescription = (EditText) findViewById(R.id.ProDesc);
+        btnProRegister = (Button) findViewById(R.id.btn_ProReg);
         // SqLite database handler
         db = new SQLiteHandler(getApplicationContext());
-
         // session manager
         session = new SessionManager(getApplicationContext());
 
-        if (!session.isLoggedIn()) {
+      /*  if (!session.isLoggedIn()) {
             logoutUser();
         }
-
+*/
         // Fetching user details from sqlite
         HashMap<String, String> user = db.getUserDetails();
 
@@ -131,100 +160,144 @@ public class MapsActivity extends AppCompatActivity implements
         username = name;
         useremail = email;
         // Displaying the user details on the screen
-     //   txtName.setText(name);
+        //   txtName.setText(name);
         //address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
 
         // Logout button click event
-        btnLogout.setOnClickListener(new View.OnClickListener() {
+       /* btnLogout.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 logoutUser();
             }
-        });
+        });*/
         //useraddress = getCompleteAddressString(currentLatitude,currentLongitude);
-        btnGetLoc.setOnClickListener(new View.OnClickListener() {
+        btnProRegister.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 if (currentLatitude != 0 && currentLongitude != 0) {
-                   // Toast.makeText(getApplicationContext(), useraddress, Toast.LENGTH_LONG).show();
-                    Uri.Builder builder = new Uri.Builder();
-                    builder.scheme("http")
-                            .encodedAuthority("arvitis.ddns.net:62222")
-                            .appendPath("android_login_api")
-                            .appendPath("Update.php")
-                            .appendQueryParameter("email", useremail)
-                            .appendQueryParameter("Long", String.valueOf(currentLongitude))
-                            .appendQueryParameter("Lat", String.valueOf(currentLatitude))
-                            .appendQueryParameter("Rating", String.valueOf(ratingBar.getRating()));
-                    String URL_UPDATE = builder.build().toString();
-                    JsonObjectRequest strReq = new JsonObjectRequest(
-                            Request.Method.POST,
-                            URL_UPDATE,
-                            null,
-                            new Response.Listener<JSONObject>() {
-                                @Override
-                                public void onResponse(JSONObject response) {
-                                    Log.d(TAG, "Update Response: " + response.toString());
-                                    Toast.makeText(getApplicationContext(), "Update successful!!!" , Toast.LENGTH_SHORT).show();
-                                }
-                            },
-                            new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    Log.e(TAG, "Update Error: " + error.getMessage());
-                                    Toast.makeText(getApplicationContext(),
-                                            error.getMessage(), Toast.LENGTH_LONG).show();
-                                }
-                            }) ;
-                    VolleyController.getInstance(getApplicationContext()).addToRequestQueue(strReq);
-            }
-            else {
+                    String name = inputFullName.getText().toString().trim();
+                    String email = inputEmail.getText().toString().trim();
+                    String password = inputPassword.getText().toString().trim();
+                    String Description = inputDescription.getText().toString().trim();
+
+                    if (!name.isEmpty() && !email.isEmpty() && !Description.isEmpty() && !Profession.isEmpty()&& !password.isEmpty()) {
+                         registerUser(name, email, password, Description);
+                    } else {
+                        Toast.makeText(getApplicationContext(),
+                                "Please enter your account details!", Toast.LENGTH_LONG)
+                                .show();
+                    }
+                }
+                else {
                     Toast.makeText(getApplicationContext(), "Coordinates are empty", Toast.LENGTH_LONG).show();
                 }}
         });
 
 
-
     }
+
+    public void registerUser(String name, String email, String password, String description) {
+        // Tag used to cancel the request
+       Toast.makeText(getApplicationContext(), "TEST: " + name + " " + email+ " " + password + " "+ description+ " " + Profession+ " " +String.valueOf(currentLatitude) + " "+ String.valueOf(currentLongitude) , Toast.LENGTH_LONG).show();
+        String tag_string_req = "req_register";
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme("http")
+                .encodedAuthority("arvitis.ddns.net:62222")
+                .appendPath("android_login_api")
+                .appendPath("proregister.php")
+                .appendQueryParameter("email", email)
+                .appendQueryParameter("password", password)
+                .appendQueryParameter("name", name)
+                .appendQueryParameter("Description", description)
+                .appendQueryParameter("Profession", String.valueOf(Profession))
+                .appendQueryParameter("Lat", String.valueOf(currentLatitude))
+                .appendQueryParameter("Long", String.valueOf(currentLongitude));
+        String  URL_REGISTER = builder.build().toString();
+
+        JsonObjectRequest strReq = new JsonObjectRequest(
+        Request.Method.POST,
+                URL_REGISTER,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d(TAG, "Register Response: " + response.toString());
+                       // Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
+                        try {
+                            // JSONObject jObj = new JSONObject(response);
+                            boolean error = response.getBoolean("error");
+                            if (!error) {
+                                // User successfully stored in MySQL
+                                // Now store the user in sqlite
+                                String uid = response.getString("uid");
+
+                                JSONObject user = response.getJSONObject("user");
+                                String name = user.getString("name");
+                                String email = user.getString("email");
+                                String created_at = user.getString("created_at");
+
+                                // Inserting row in users table
+                                db.addUser(name, email, uid, created_at);
+
+                                Toast.makeText(getApplicationContext(), "Professional successfully registered. Try login now!", Toast.LENGTH_LONG).show();
+
+                                // Launch login activity
+                                Intent intent = new Intent(
+                                        ProRegisterActivity.this,
+                                        LoginActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+
+                                // Error occurred in registration. Get the error
+                                // message
+                                String errorMsg = response.getString("error_msg");
+                                Toast.makeText(getApplicationContext(),
+                                        errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "Registration Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+        // Adding request to request queue
+        VolleyController.getInstance(getApplicationContext()).addToRequestQueue(strReq);
+    }
+
 
     @Override
     public void onPause() {
         super.onPause();
-
-        //stop location updates when Activity is no longer active
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+        /*//stop location updates when Activity is no longer active
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
+        }*/
     }
     @Override
     public void onResume() {
         super.onResume();
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
-        builder.setAlwaysShow(true);
-
-        /*if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-        //stop location updates when Activity is no longer active
-        buildGoogleApiClient();
-        mGoogleMap.setMyLocationEnabled(true);
-        address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));*/
+       // mGoogleApiClient.connect();
+        address.setText("You are located at (on resume): " + getCompleteAddressString(currentLatitude,currentLongitude));
     }
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
         mGoogleMap=googleMap;
-       // mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        // mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -257,22 +330,41 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onConnected(Bundle bundle) {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setInterval(500);
+        mLocationRequest.setFastestInterval(500);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
         builder.setAlwaysShow(true);
 
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
 
-        address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
-    }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        if (currentLatitude != 0 && currentLongitude != 0) {
+            double LcurrentLatitude = location.getLatitude();
+            double LcurrentLongitude = location.getLongitude();
+            LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+
+            MarkerOptions options = new MarkerOptions()
+                    .position(latLng)
+                    .title("I am here!");
+            mGoogleMap.addMarker(options);
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            address.setText("You are located at (onconnected): " + getCompleteAddressString(LcurrentLatitude, LcurrentLongitude));
+        } else {
+            // Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            // if (location == null)
+            address.setText("Location not available (onconnected)!");
+        }
+
+        }
+
 
     @Override
     public void onConnectionSuspended(int i) {}
@@ -300,11 +392,12 @@ public class MapsActivity extends AppCompatActivity implements
 
         //move map camera
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,11));
-        address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
+        address.setText("You are located at (onlocationchanged): " + getCompleteAddressString(currentLatitude,currentLongitude));
 
     }
 
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
+
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -323,7 +416,7 @@ public class MapsActivity extends AppCompatActivity implements
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(MapsActivity.this,
+                                ActivityCompat.requestPermissions(ProRegisterActivity.this,
                                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                         MY_PERMISSIONS_REQUEST_LOCATION );
                             }
@@ -381,7 +474,7 @@ public class MapsActivity extends AppCompatActivity implements
         db.deleteUsers();
 
         // Launching the login activity
-        Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
+        Intent intent = new Intent(ProRegisterActivity.this, LoginActivity.class);
         startActivity(intent);
         finish();
     }
@@ -398,29 +491,25 @@ public class MapsActivity extends AppCompatActivity implements
                     strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
                 }
                 strAdd = strReturnedAddress.toString();
-               // Log.w("My Current loction address", "" + strReturnedAddress.toString());
+                // Log.w("My Current loction address", "" + strReturnedAddress.toString());
             } else {
                 //Log.w("My Current loction address", "No Address returned!");
             }
         } catch (Exception e) {
             e.printStackTrace();
-           // Log.w("My Current loction address", "Canont get Address!");
+            // Log.w("My Current loction address", "Canont get Address!");
         }
         return strAdd;
     }
-    public void addListenerOnRatingBar() {
 
-        ratingBar = (RatingBar) findViewById(R.id.ratingBar);
-        //txtRatingValue = (TextView) findViewById(R.id.txtRatingValue);
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        Profession = adapterView.getItemAtPosition(i).toString();
+        // Toast.makeText(this, adapterView.getItemAtPosition(i).toString(), Toast.LENGTH_LONG).show();
+    }
 
-        //if rating value is changed,
-        //display the current rating value in the result (textview) automatically
-        ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-            @Override
-            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                Toast.makeText(getApplicationContext(), String.valueOf(v), Toast.LENGTH_LONG).show();
-            }
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
 
-        });
     }
 }

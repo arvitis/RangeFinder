@@ -39,6 +39,7 @@ public class RegisterActivity extends Activity {
     private static final String TAG = RegisterActivity.class.getSimpleName();
     private Button btnRegister;
     private Button btnLinkToLogin;
+    private Button btnProRegister;
     private EditText inputFullName;
     private EditText inputEmail;
     private EditText inputPassword;
@@ -54,7 +55,9 @@ public class RegisterActivity extends Activity {
         inputEmail = findViewById(R.id.email);
         inputPassword = findViewById(R.id.password);
         btnRegister = findViewById(R.id.btnRegister);
+        btnProRegister = findViewById(R.id.btn_proregister);
         btnLinkToLogin = findViewById(R.id.btnLinkToLoginScreen);
+
 
 
 
@@ -96,6 +99,16 @@ public class RegisterActivity extends Activity {
             public void onClick(View view) {
                 Intent i = new Intent(getApplicationContext(),
                         LoginActivity.class);
+                startActivity(i);
+                finish();
+            }
+        });
+        // Link to Pro Register Screen
+        btnProRegister.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View view) {
+                Intent i = new Intent(getApplicationContext(),
+                        ProRegisterActivity.class);
                 startActivity(i);
                 finish();
             }
