@@ -137,7 +137,8 @@ public class LoginActivity extends AppCompatActivity {
                                 db.addUser(name, email, uid, created_at,pro);
 
 
-                                if (pro == "0") {
+                                if (pro.equals("0")) {
+                                   // Toast.makeText(getApplicationContext(), "simple user: " + pro, Toast.LENGTH_LONG).show();
                                     // Login simple user
                                     Intent intent = new Intent(LoginActivity.this,
                                             MapsActivity.class);
@@ -146,6 +147,7 @@ public class LoginActivity extends AppCompatActivity {
 
                                 }else{
                                     // Login Pro user
+                                   // Toast.makeText(getApplicationContext(), "Pro user " + pro, Toast.LENGTH_LONG).show();
                                     Intent intent = new Intent(LoginActivity.this,
                                             ProManagerActivity.class);
                                     startActivity(intent);
