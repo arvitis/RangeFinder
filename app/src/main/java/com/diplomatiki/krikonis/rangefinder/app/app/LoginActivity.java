@@ -131,17 +131,27 @@ public class LoginActivity extends AppCompatActivity {
                                 JSONObject user = response.getJSONObject("user");
                                 String name = user.getString("name");
                                 String email = user.getString("email");
-                                String created_at = user
-                                        .getString("created_at");
-
+                                String created_at = user.getString("created_at");
+                                String pro = user.getString("Pro");
                                 // Inserting row in users table
-                                db.addUser(name, email, uid, created_at);
+                                db.addUser(name, email, uid, created_at,pro);
 
-                                // Launch main activity
-                                Intent intent = new Intent(LoginActivity.this,
-                                        MapsActivity.class);
-                                startActivity(intent);
-                                finish();
+
+                                if (pro == "0") {
+                                    // Login simple user
+                                    Intent intent = new Intent(LoginActivity.this,
+                                            MapsActivity.class);
+                                    startActivity(intent);
+                                    finish();
+
+                                }else{
+                                    // Login Pro user
+                                    Intent intent = new Intent(LoginActivity.this,
+                                            ProManagerActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                }
+
                             } else {
                                 // Error in login. Get the error message
                                 String errorMsg = response.getString("error_msg");

@@ -237,9 +237,9 @@ public class ProRegisterActivity extends AppCompatActivity implements
                                 String name = user.getString("name");
                                 String email = user.getString("email");
                                 String created_at = user.getString("created_at");
-
+                                String pro = user.getString("Pro");
                                 // Inserting row in users table
-                                db.addUser(name, email, uid, created_at);
+                                db.addUser(name, email, uid, created_at,pro);
 
                                 Toast.makeText(getApplicationContext(), "Professional successfully registered. Try login now!", Toast.LENGTH_LONG).show();
 
@@ -353,8 +353,9 @@ public class ProRegisterActivity extends AppCompatActivity implements
 
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
-                    .title("I am here!");
-            mGoogleMap.addMarker(options);
+                    .title("You are here!")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            mCurrLocationMarker = mGoogleMap.addMarker(options);
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             address.setText("You are located at (onconnected): " + getCompleteAddressString(LcurrentLatitude, LcurrentLongitude));
         } else {
@@ -384,11 +385,11 @@ public class ProRegisterActivity extends AppCompatActivity implements
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         currentLatitude = location.getLatitude();
         currentLongitude = location.getLongitude();
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title(username);
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        mCurrLocationMarker = mGoogleMap.addMarker(markerOptions);
+        MarkerOptions options = new MarkerOptions()
+                .position(latLng)
+                .title("You are here!")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        mCurrLocationMarker = mGoogleMap.addMarker(options);
 
         //move map camera
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,11));

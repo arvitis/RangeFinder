@@ -49,7 +49,8 @@
             android:name=".app.app.MapsActivity"
             android:label="@string/title_activity_maps"
             android:screenOrientation="portrait" />
-        <activity android:name=".app.app.ProRegisterActivity"></activity>
+        <activity android:name=".app.app.ProRegisterActivity" />
+        <activity android:name=".app.app.ProManagerActivity"></activity>
     </application>
 
 </manifest>
