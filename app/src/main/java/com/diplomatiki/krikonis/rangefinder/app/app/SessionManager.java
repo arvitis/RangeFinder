@@ -28,6 +28,8 @@ public class SessionManager {
     private static final String PREF_NAME = "RangeFinderLogin";
 
     private static final String KEY_IS_LOGGEDIN = "isLoggedIn";
+    private static final String KEY_IS_PRO= "isPro";
+    private static final String KEY_UID = "uid";
 
     public SessionManager(Context context) {
         this._context = context;
@@ -35,17 +37,31 @@ public class SessionManager {
         editor = pref.edit();
     }
 
-    public void setLogin(boolean isLoggedIn) {
+    public void setLogin(boolean isLoggedIn, String isPro) {
 
         editor.putBoolean(KEY_IS_LOGGEDIN, isLoggedIn);
-
+        editor.putString(KEY_IS_PRO, isPro);
         // commit changes
         editor.commit();
 
         Log.d(TAG, "User login session modified!");
     }
+    public void setuid(String uid) {
 
+        //editor.putBoolean(KEY_IS_LOGGEDIN, isLoggedIn);
+        editor.putString(KEY_UID, uid);
+        // commit changes
+        editor.commit();
+
+        Log.d(TAG, "User login session modified!");
+    }
     public boolean isLoggedIn(){
         return pref.getBoolean(KEY_IS_LOGGEDIN, false);
+    }
+    public String isPro(){
+        return pref.getString(KEY_IS_PRO,"");
+    }
+    public String getuid(){
+        return pref.getString(KEY_UID,"");
     }
 }

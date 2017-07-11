@@ -16,7 +16,7 @@
 
 
     <Button
-        android:id="@+id/btnLogout"
+        android:id="@+id/btnLogoutPro"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/btn_logut_bg"
@@ -52,7 +52,7 @@
         android:id="@+id/btn_showusers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btnLogout"
+        android:layout_above="@+id/btnLogoutPro"
         android:layout_alignParentStart="true"
         android:background="@android:color/holo_blue_bright"
         android:text="@string/btn_getusers" />

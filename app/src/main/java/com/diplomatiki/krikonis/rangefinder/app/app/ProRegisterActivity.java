@@ -470,7 +470,7 @@ public class ProRegisterActivity extends AppCompatActivity implements
         }
     }
     private void logoutUser() {
-        session.setLogin(false);
+        session.setLogin(false,"");
 
         db.deleteUsers();
 

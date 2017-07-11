@@ -38,6 +38,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -55,7 +56,7 @@ import java.util.Locale;
 
 public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener , GoogleMap.OnMarkerClickListener {
     private static final String TAG = MapsActivity.class.getSimpleName();
     GoogleMap mGoogleMap;
     SupportMapFragment mapFrag;
@@ -82,6 +83,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     // temporary string to show the parsed response
     private String jsonResponse;
+    String prouid;
+    String uid;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -89,13 +92,14 @@ public class MapsActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_maps);
         address = (TextView) findViewById(R.id.proaddress);
         inputradius  = (EditText) findViewById(R.id.radius);
-        btnLogout = (Button) findViewById(R.id.btnLogout);
+        btnLogout = (Button) findViewById(R.id.btnLogoutPro);
         btnGetLoc = (Button) findViewById(R.id.btngetloc);
         btnGetUsers = (Button) findViewById(R.id.btn_showusers);
 
-        getSupportActionBar().setTitle("Map Location Activity");
+        getSupportActionBar().setTitle("Points of Interest Activity");
         addListenerOnRatingBar();
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        //HashMap<Marker, EventInfo> eventMarkerMap;
         mapFrag.getMapAsync(this);
         getinitloc = true;
         // Check for enabled GPS
@@ -127,7 +131,7 @@ public class MapsActivity extends AppCompatActivity implements
         // SqLite database handler
         db = new SQLiteHandler(getApplicationContext());
 
-        // session manager
+       // Toast.makeText(getApplicationContext(), user.get("uid"), Toast.LENGTH_LONG).show();
         session = new SessionManager(getApplicationContext());
 
         if (!session.isLoggedIn()) {
@@ -135,17 +139,17 @@ public class MapsActivity extends AppCompatActivity implements
         }
 
         // Fetching user details from sqlite
-        HashMap<String, String> user = db.getUserDetails();
 
-        String name = user.get("name");
-        String email = user.get("email");
-        username = name;
-        useremail = email;
+       // Toast.makeText(getApplicationContext(), session.getuid(), Toast.LENGTH_LONG).show();
+        //String email = user.get("email");
+       // username = name;
+       // useremail = email;
         // Displaying the user details on the screen
      //   txtName.setText(name);
         //address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
 
         // Logout button click event
+
         btnGetUsers.setOnClickListener(new View.OnClickListener() {
 
             //int radiusinkm = Integer.parseInt(radius);
@@ -181,8 +185,11 @@ public class MapsActivity extends AppCompatActivity implements
                                     MarkerOptions myoptions = new MarkerOptions()
                                             .position(mylatLng)
                                             .title("You are here!")
-                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-                                    mGoogleMap.addMarker(myoptions);
+
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                                    Marker mymarker = mGoogleMap.addMarker(myoptions);
+                                    mymarker.setTag("");
+                                    //mGoogleMap.addMarker(myoptions);
                                     mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mylatLng,15));
                                     // Zoom in, animating the camera.
                                   //  mGoogleMap.animateCamera(CameraUpdateFactory.zoomIn());
@@ -194,13 +201,19 @@ public class MapsActivity extends AppCompatActivity implements
                                             String name = user.getString("name");
                                             String Long = user.getString("Lng");
                                             String Lat = user.getString("Lat");
+                                            String Profession = user.getString("Profession");
+                                            String uid = user.getString("uid");
                                             LatLng latLng = new LatLng(Double.parseDouble(Lat), Double.parseDouble(Long));
 
                                             MarkerOptions options = new MarkerOptions()
                                                     .position(latLng)
                                                     .title(name)
+                                                    .snippet(Profession)
                                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                                            mGoogleMap.addMarker(options);
+                                            Marker marker = mGoogleMap.addMarker(options);
+                                            marker.setTag(uid);
+                                            //marker.showInfoWindow();
+                                          // mGoogleMap.addMarker(options);
                                             //Toast.makeText(getApplicationContext(), name, Toast.LENGTH_LONG).show();
 
                                         }
@@ -242,16 +255,16 @@ public class MapsActivity extends AppCompatActivity implements
 
             @Override
             public void onClick(View view) {
-                if (currentLatitude != 0 && currentLongitude != 0) {
-                   // Toast.makeText(getApplicationContext(), useraddress, Toast.LENGTH_LONG).show();
+                uid = session.getuid();
+                if (currentLatitude != 0 && currentLongitude != 0 && !TextUtils.isEmpty(prouid) && !TextUtils.isEmpty(uid)) {
+                   // Toast.makeText(getApplicationContext(), uid.toString(), Toast.LENGTH_LONG).show();
                     Uri.Builder builder = new Uri.Builder();
                     builder.scheme("http")
                             .encodedAuthority("arvitis.ddns.net:62222")
                             .appendPath("android_login_api")
-                            .appendPath("Update.php")
-                            .appendQueryParameter("email", useremail)
-                            .appendQueryParameter("Long", String.valueOf(currentLongitude))
-                            .appendQueryParameter("Lat", String.valueOf(currentLatitude))
+                            .appendPath("ratelocation.php")
+                            .appendQueryParameter("prouid", prouid)
+                            .appendQueryParameter("uid", uid)
                             .appendQueryParameter("Rating", String.valueOf(ratingBar.getRating()));
                     String URL_UPDATE = builder.build().toString();
                     JsonObjectRequest strReq = new JsonObjectRequest(
@@ -262,13 +275,14 @@ public class MapsActivity extends AppCompatActivity implements
                                 @Override
                                 public void onResponse(JSONObject response) {
                                     Log.d(TAG, "Update Response: " + response.toString());
-                                    Toast.makeText(getApplicationContext(), "Update successful!!!" , Toast.LENGTH_SHORT).show();
+                                    prouid = "";
+                                    Toast.makeText(getApplicationContext(), "Rating successful!!!" , Toast.LENGTH_SHORT).show();
                                 }
                             },
                             new Response.ErrorListener() {
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
-                                    Log.e(TAG, "Update Error: " + error.getMessage());
+                                    Log.e(TAG, "Rating Error: " + error.getMessage());
                                     Toast.makeText(getApplicationContext(),
                                             error.getMessage(), Toast.LENGTH_LONG).show();
                                 }
@@ -276,7 +290,16 @@ public class MapsActivity extends AppCompatActivity implements
                     VolleyController.getInstance(getApplicationContext()).addToRequestQueue(strReq);
             }
             else {
-                    Toast.makeText(getApplicationContext(), "Coordinates are empty", Toast.LENGTH_LONG).show();
+                    if (currentLatitude == 0 || currentLongitude == 0) {
+                        Toast.makeText(getApplicationContext(), "Coordinates are empty.Check your location", Toast.LENGTH_LONG).show();
+                    }
+                    if (TextUtils.isEmpty(prouid)) {
+                        Toast.makeText(getApplicationContext(), "You must select a point of interest to rate!", Toast.LENGTH_LONG).show();
+                    }
+                    if (TextUtils.isEmpty(uid)) {
+                        Toast.makeText(getApplicationContext(), "Your account details have not been stored.Try logging in again!!", Toast.LENGTH_LONG).show();
+                    }
+                    //Toast.makeText(getApplicationContext(), "userid :" + uid + "prouserid :" + prouid, Toast.LENGTH_LONG).show();
                 }}
         });
 
@@ -294,12 +317,13 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
+        getinitloc = true;
 
     }
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
-        mGoogleMap=googleMap;
+        mGoogleMap = googleMap;
        // mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         //Initialize Google Play Services
@@ -319,6 +343,7 @@ public class MapsActivity extends AppCompatActivity implements
             buildGoogleApiClient();
             mGoogleMap.setMyLocationEnabled(true);
         }
+        mGoogleMap.setOnMarkerClickListener(this);
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -387,7 +412,7 @@ public class MapsActivity extends AppCompatActivity implements
             currentLongitude = location.getLongitude();
         if (getinitloc == true && currentLatitude  !=0 && currentLongitude !=0 ) {
             mGoogleMap.clear();
-            Toast.makeText(getApplicationContext(), "MPIKE", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(getApplicationContext(), "MPIKE", Toast.LENGTH_SHORT).show();
             if (mCurrLocationMarker != null) {
                 mCurrLocationMarker.remove();
             }
@@ -395,8 +420,9 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(latLng)
                     .title("You are here!")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-            mCurrLocationMarker = mGoogleMap.addMarker(markerOptions);
-
+           // mCurrLocationMarker = mGoogleMap.addMarker(markerOptions);
+            Marker mymarker = mGoogleMap.addMarker(markerOptions);
+            mymarker.setTag("");
             //move map camera
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
             // mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mylatLng,15));
@@ -480,7 +506,7 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
     private void logoutUser() {
-        session.setLogin(false);
+        session.setLogin(false,"");
 
         db.deleteUsers();
 
@@ -528,4 +554,15 @@ public class MapsActivity extends AppCompatActivity implements
         });
     }
 
+    @Override
+    public boolean onMarkerClick(final Marker marker) {
+       // Toast.makeText(getApplicationContext(), "Marker :" + marker.getTag().toString(), Toast.LENGTH_LONG).show();
+        prouid = marker.getTag().toString();
+        return false;
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
 }

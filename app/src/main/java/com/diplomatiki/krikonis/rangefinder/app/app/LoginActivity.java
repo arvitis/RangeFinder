@@ -1,7 +1,9 @@
 package com.diplomatiki.krikonis.rangefinder.app.app;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.content.Intent;
@@ -36,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
     private SessionManager session;
     private SQLiteHandler db;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,18 +52,32 @@ public class LoginActivity extends AppCompatActivity {
 
         // SQLite database handler
         db = new SQLiteHandler(getApplicationContext());
+//*/ Fetching user details from sqlite
+     //   HashMap<String, String> user = db.getUserDetails();
 
+     //   String pro = user.get("Pro");*/
+       // String email = user.get("email");
         // Session manager
         session = new SessionManager(getApplicationContext());
 
+        //String ispro = session.pref.getString("KEY_IS_PRO","").toString();
+        //Toast.makeText(getApplicationContext(), "user session : " + session.isPro(), Toast.LENGTH_LONG).show();
+        //
         // Check if user is already logged in or not
         if (session.isLoggedIn()) {
             // User is already logged in. Take him to main activity
-            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-            startActivity(intent);
-            finish();
-        }
+            if (session.isPro().equals("1")) {
 
+                Intent intent = new Intent(LoginActivity.this, ProManagerActivity.class);
+                startActivity(intent);
+                finish();
+
+            }else{
+                Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                startActivity(intent);
+                finish();
+
+        }}
 // Login button Click Event
         btnLogin.setOnClickListener(new View.OnClickListener() {
 
@@ -123,11 +140,12 @@ public class LoginActivity extends AppCompatActivity {
                             if (!error) {
                                 // user successfully logged in
                                 // Create login session
-                                session.setLogin(true);
+
 
                                 // Now store the user in SQLite
                                 String uid = response.getString("uid");
-
+                                //MapsActivity.class.
+                                //Toast.makeText(getApplicationContext(), uid, Toast.LENGTH_LONG).show();
                                 JSONObject user = response.getJSONObject("user");
                                 String name = user.getString("name");
                                 String email = user.getString("email");
@@ -135,7 +153,8 @@ public class LoginActivity extends AppCompatActivity {
                                 String pro = user.getString("Pro");
                                 // Inserting row in users table
                                 db.addUser(name, email, uid, created_at,pro);
-
+                                session.setuid(uid);
+                                session.setLogin(true,pro);
 
                                 if (pro.equals("0")) {
                                    // Toast.makeText(getApplicationContext(), "simple user: " + pro, Toast.LENGTH_LONG).show();
