@@ -38,7 +38,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -50,7 +49,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -92,7 +90,7 @@ public class MapsActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_maps);
         address = (TextView) findViewById(R.id.proaddress);
         inputradius  = (EditText) findViewById(R.id.radius);
-        btnLogout = (Button) findViewById(R.id.btnLogoutPro);
+        btnLogout = (Button) findViewById(R.id.btnupdateratings);
         btnGetLoc = (Button) findViewById(R.id.btngetloc);
         btnGetUsers = (Button) findViewById(R.id.btn_showusers);
 
@@ -297,7 +295,7 @@ public class MapsActivity extends AppCompatActivity implements
                         Toast.makeText(getApplicationContext(), "You must select a point of interest to rate!", Toast.LENGTH_LONG).show();
                     }
                     if (TextUtils.isEmpty(uid)) {
-                        Toast.makeText(getApplicationContext(), "Your account details have not been stored.Try logging in again!!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Your account details have not been stored.Try logging in again!", Toast.LENGTH_LONG).show();
                     }
                     //Toast.makeText(getApplicationContext(), "userid :" + uid + "prouserid :" + prouid, Toast.LENGTH_LONG).show();
                 }}
@@ -548,7 +546,7 @@ public class MapsActivity extends AppCompatActivity implements
         ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                Toast.makeText(getApplicationContext(), String.valueOf(v), Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), String.valueOf(v), Toast.LENGTH_LONG).show();
             }
 
         });

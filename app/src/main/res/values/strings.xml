@@ -18,6 +18,8 @@
     <string name="title_activity_maps">Map</string>
     <string name="btn_location">Rate Location</string>
     <string name="btn_getusers">Get nearby users</string>
+    <string name="btn_updateratings">UPDATE RATINGS</string>
+    <string name="general_rating">Your overall rating is : </string>
     <string-array name="profession_array">
         <item>cafe</item>
         <item>bar-club</item>
