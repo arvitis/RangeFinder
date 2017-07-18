@@ -4,19 +4,14 @@ import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -27,7 +22,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,7 +33,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.diplomatiki.krikonis.rangefinder.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -52,12 +45,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import android.widget.TextView;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -71,7 +60,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
     LocationRequest mLocationRequest;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
-    Location initLocation;
     Marker mCurrLocationMarker;
 
     public TextView address;
@@ -80,7 +68,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
     private EditText inputPassword;
     private EditText inputDescription;
     private Button btnProRegister;
-    private String provider;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private SQLiteHandler db;
     private SessionManager session;
@@ -97,7 +84,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pro_register);
         getSupportActionBar().setTitle("Professional Entry");
-
         Spinner spinner = (Spinner) findViewById(R.id.prospinner);
 // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -107,7 +93,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
 // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
-
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFrag.getMapAsync(this);
         // Check for enabled GPS
@@ -135,8 +120,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
             AlertDialog alert = builder.create();
             alert.show();
                }
-
-////////////////////////////////////////////////////////////////////////////////
         address = (TextView) findViewById(R.id.proaddress);
         inputFullName = (EditText) findViewById(R.id.ProName);
         inputEmail = (EditText) findViewById(R.id.ProEmail);
@@ -147,11 +130,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
         db = new SQLiteHandler(getApplicationContext());
         // session manager
         session = new SessionManager(getApplicationContext());
-
-      /*  if (!session.isLoggedIn()) {
-            logoutUser();
-        }
-*/
         // Fetching user details from sqlite
         HashMap<String, String> user = db.getUserDetails();
 
@@ -159,19 +137,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
         String email = user.get("email");
         username = name;
         useremail = email;
-        // Displaying the user details on the screen
-        //   txtName.setText(name);
-        //address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
-
-        // Logout button click event
-       /* btnLogout.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                logoutUser();
-            }
-        });*/
-        //useraddress = getCompleteAddressString(currentLatitude,currentLongitude);
         btnProRegister.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -194,14 +159,9 @@ public class ProRegisterActivity extends AppCompatActivity implements
                     Toast.makeText(getApplicationContext(), "Coordinates are empty", Toast.LENGTH_LONG).show();
                 }}
         });
-
-
     }
-
     public void registerUser(String name, String email, String password, String description) {
         // Tag used to cancel the request
-       Toast.makeText(getApplicationContext(), "TEST: " + name + " " + email+ " " + password + " "+ description+ " " + Profession+ " " +String.valueOf(currentLatitude) + " "+ String.valueOf(currentLongitude) , Toast.LENGTH_LONG).show();
-        String tag_string_req = "req_register";
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                 .encodedAuthority("arvitis.ddns.net:62222")
@@ -224,15 +184,10 @@ public class ProRegisterActivity extends AppCompatActivity implements
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(TAG, "Register Response: " + response.toString());
-                       // Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
                         try {
-                            // JSONObject jObj = new JSONObject(response);
                             boolean error = response.getBoolean("error");
                             if (!error) {
-                                // User successfully stored in MySQL
-                                // Now store the user in sqlite
                                 String uid = response.getString("uid");
-
                                 JSONObject user = response.getJSONObject("user");
                                 String name = user.getString("name");
                                 String email = user.getString("email");
@@ -240,9 +195,7 @@ public class ProRegisterActivity extends AppCompatActivity implements
                                 String pro = user.getString("Pro");
                                 // Inserting row in users table
                                 db.addUser(name, email, uid, created_at,pro);
-
                                 Toast.makeText(getApplicationContext(), "Professional successfully registered. Try login now!", Toast.LENGTH_LONG).show();
-
                                 // Launch login activity
                                 Intent intent = new Intent(
                                         ProRegisterActivity.this,
@@ -250,7 +203,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
                                 startActivity(intent);
                                 finish();
                             } else {
-
                                 // Error occurred in registration. Get the error
                                 // message
                                 String errorMsg = response.getString("error_msg");
@@ -282,23 +234,16 @@ public class ProRegisterActivity extends AppCompatActivity implements
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-        /*//stop location updates when Activity is no longer active
-        if (mGoogleApiClient != null) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }*/
     }
     @Override
     public void onResume() {
         super.onResume();
-       // mGoogleApiClient.connect();
         address.setText("You are located at (on resume): " + getCompleteAddressString(currentLatitude,currentLongitude));
     }
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
         mGoogleMap=googleMap;
-        // mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this,
@@ -359,9 +304,7 @@ public class ProRegisterActivity extends AppCompatActivity implements
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             address.setText("You are located at (onconnected): " + getCompleteAddressString(LcurrentLatitude, LcurrentLongitude));
         } else {
-            // Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            // if (location == null)
-            address.setText("Location not available (onconnected)!");
+           address.setText("Location not available (onconnected)!");
         }
 
         }
@@ -398,15 +341,12 @@ public class ProRegisterActivity extends AppCompatActivity implements
     }
 
 
-
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
@@ -424,8 +364,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
                         })
                         .create()
                         .show();
-
-
             } else {
                 // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this,
@@ -443,37 +381,30 @@ public class ProRegisterActivity extends AppCompatActivity implements
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
                     // permission was granted, yay! Do the
                     // location-related task you need to do.
                     if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
-
                         if (mGoogleApiClient == null) {
                             buildGoogleApiClient();
                         }
                         mGoogleMap.setMyLocationEnabled(true);
                     }
-
                 } else {
-
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     Toast.makeText(this, "permission denied", Toast.LENGTH_LONG).show();
                 }
                 return;
             }
-
             // other 'case' lines to check for other
             // permissions this app might request
         }
     }
     private void logoutUser() {
         session.setLogin(false,"");
-
         db.deleteUsers();
-
         // Launching the login activity
         Intent intent = new Intent(ProRegisterActivity.this, LoginActivity.class);
         startActivity(intent);
@@ -506,7 +437,6 @@ public class ProRegisterActivity extends AppCompatActivity implements
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         Profession = adapterView.getItemAtPosition(i).toString();
-        // Toast.makeText(this, adapterView.getItemAtPosition(i).toString(), Toast.LENGTH_LONG).show();
     }
 
     @Override

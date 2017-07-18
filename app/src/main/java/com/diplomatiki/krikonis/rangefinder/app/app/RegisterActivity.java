@@ -9,7 +9,6 @@ package com.diplomatiki.krikonis.rangefinder.app.app;
  */
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,18 +19,12 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.Request.Method;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import com.diplomatiki.krikonis.rangefinder.R;
 
 
@@ -50,23 +43,16 @@ public class RegisterActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
         inputFullName = findViewById(R.id.name);
         inputEmail = findViewById(R.id.email);
         inputPassword = findViewById(R.id.password);
         btnRegister = findViewById(R.id.btnRegister);
         btnProRegister = findViewById(R.id.btn_proregister);
         btnLinkToLogin = findViewById(R.id.btnLinkToLoginScreen);
-
-
-
-
         // Session manager
         session = new SessionManager(getApplicationContext());
-
         // SQLite database handler
         db = new SQLiteHandler(getApplicationContext());
-
         // Check if user is already logged in or not
         if (session.isLoggedIn()) {
             // User is already logged in. Take him to main activity
@@ -75,14 +61,12 @@ public class RegisterActivity extends Activity {
             startActivity(intent);
             finish();
         }
-
         // Register Button Click event
         btnRegister.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 String name = inputFullName.getText().toString().trim();
                 String email = inputEmail.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
-
                 if (!name.isEmpty() && !email.isEmpty() && !password.isEmpty()) {
                     registerUser(name, email, password);
                 } else {
@@ -113,9 +97,7 @@ public class RegisterActivity extends Activity {
                 finish();
             }
         });
-
     }
-
     /**
      * Function to store user in MySQL database will post params(tag, name,
      * email, password) to register url
@@ -123,7 +105,6 @@ public class RegisterActivity extends Activity {
     private void registerUser(final String name, final String email,
                               final String password) {
         // Tag used to cancel the request
-        String tag_string_req = "req_register";
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                 .encodedAuthority("arvitis.ddns.net:62222")
@@ -142,15 +123,12 @@ public class RegisterActivity extends Activity {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(TAG, "Register Response: " + response.toString());
-               // Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
                 try {
-                   // JSONObject jObj = new JSONObject(response);
                     boolean error = response.getBoolean("error");
                     if (!error) {
                         // User successfully stored in MySQL
                         // Now store the user in sqlite
                         String uid = response.getString("uid");
-
                         JSONObject user = response.getJSONObject("user");
                         String name = user.getString("name");
                         String email = user.getString("email");
@@ -158,9 +136,7 @@ public class RegisterActivity extends Activity {
                         String pro = user.getString("Pro");
                         // Inserting row in users table
                        db.addUser(name, email, uid, created_at,pro);
-
                        Toast.makeText(getApplicationContext(), "User successfully registered. Try login now!", Toast.LENGTH_LONG).show();
-
                         // Launch login activity
                         Intent intent = new Intent(
                                 RegisterActivity.this,
@@ -168,7 +144,6 @@ public class RegisterActivity extends Activity {
                         startActivity(intent);
                         finish();
                     } else {
-
                         // Error occurred in registration. Get the error
                         // message
                         String errorMsg = response.getString("error_msg");

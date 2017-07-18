@@ -1,9 +1,7 @@
 package com.diplomatiki.krikonis.rangefinder.app.app;
 
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.content.Intent;
@@ -11,20 +9,12 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import com.android.volley.Request;
-import com.android.volley.Request.Method;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.android.volley.toolbox.Volley;
 import com.diplomatiki.krikonis.rangefinder.R;
 
 
@@ -52,17 +42,10 @@ public class LoginActivity extends AppCompatActivity {
 
         // SQLite database handler
         db = new SQLiteHandler(getApplicationContext());
-//*/ Fetching user details from sqlite
-     //   HashMap<String, String> user = db.getUserDetails();
 
-     //   String pro = user.get("Pro");*/
-       // String email = user.get("email");
         // Session manager
         session = new SessionManager(getApplicationContext());
 
-        //String ispro = session.pref.getString("KEY_IS_PRO","").toString();
-        //Toast.makeText(getApplicationContext(), "user session : " + session.isPro(), Toast.LENGTH_LONG).show();
-        //
         // Check if user is already logged in or not
         if (session.isLoggedIn()) {
             // User is already logged in. Take him to main activity
@@ -131,21 +114,15 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(TAG, "Login Response: " + response.toString());
-                        //Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
                         try {
                             // JSONObject jObj = new JSONObject(response);
                             boolean error = response.getBoolean("error");
-
                             // Check for error node in json
                             if (!error) {
                                 // user successfully logged in
                                 // Create login session
-
-
                                 // Now store the user in SQLite
                                 String uid = response.getString("uid");
-                                //MapsActivity.class.
-                                //Toast.makeText(getApplicationContext(), uid, Toast.LENGTH_LONG).show();
                                 JSONObject user = response.getJSONObject("user");
                                 String name = user.getString("name");
                                 String email = user.getString("email");
@@ -155,18 +132,14 @@ public class LoginActivity extends AppCompatActivity {
                                 db.addUser(name, email, uid, created_at,pro);
                                 session.setuid(uid);
                                 session.setLogin(true,pro);
-
                                 if (pro.equals("0")) {
-                                   // Toast.makeText(getApplicationContext(), "simple user: " + pro, Toast.LENGTH_LONG).show();
                                     // Login simple user
                                     Intent intent = new Intent(LoginActivity.this,
                                             MapsActivity.class);
                                     startActivity(intent);
                                     finish();
-
                                 }else{
                                     // Login Pro user
-                                   // Toast.makeText(getApplicationContext(), "Pro user " + pro, Toast.LENGTH_LONG).show();
                                     Intent intent = new Intent(LoginActivity.this,
                                             ProManagerActivity.class);
                                     startActivity(intent);

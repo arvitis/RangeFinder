@@ -62,7 +62,6 @@ public class MapsActivity extends AppCompatActivity implements
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     Marker mCurrLocationMarker;
-    public TextView txtName;
     private TextView address;
     private TextView inputradius;
     private Button btnLogout;
@@ -71,9 +70,6 @@ public class MapsActivity extends AppCompatActivity implements
     private SQLiteHandler db;
     private SessionManager session;
     private RatingBar ratingBar;
-    String username;
-    String useremail;
-    String useraddress;
     public double currentLatitude;
     public double currentLongitude;
     private TextView txtResponse;
@@ -97,7 +93,6 @@ public class MapsActivity extends AppCompatActivity implements
         getSupportActionBar().setTitle("Points of Interest Activity");
         addListenerOnRatingBar();
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        //HashMap<Marker, EventInfo> eventMarkerMap;
         mapFrag.getMapAsync(this);
         getinitloc = true;
         // Check for enabled GPS
@@ -123,41 +118,19 @@ public class MapsActivity extends AppCompatActivity implements
             AlertDialog alert = builder.create();
             alert.show();
         }
-       // txtName = (TextView) findViewById(R.id.name);
-
-
-        // SqLite database handler
         db = new SQLiteHandler(getApplicationContext());
-
-       // Toast.makeText(getApplicationContext(), user.get("uid"), Toast.LENGTH_LONG).show();
         session = new SessionManager(getApplicationContext());
-
         if (!session.isLoggedIn()) {
             logoutUser();
         }
-
-        // Fetching user details from sqlite
-
-       // Toast.makeText(getApplicationContext(), session.getuid(), Toast.LENGTH_LONG).show();
-        //String email = user.get("email");
-       // username = name;
-       // useremail = email;
-        // Displaying the user details on the screen
-     //   txtName.setText(name);
-        //address.setText("You are located at: " + getCompleteAddressString(currentLatitude,currentLongitude));
-
-        // Logout button click event
-
         btnGetUsers.setOnClickListener(new View.OnClickListener() {
 
             //int radiusinkm = Integer.parseInt(radius);
             @Override
             public void onClick(View view) {
                 final String radius = inputradius.getText().toString().trim();
-              //  enablemapzoom = true;
                 getinitloc = false;
                 if (currentLatitude != 0 && currentLongitude != 0 && !TextUtils.isEmpty(radius)) {
-                   //  Toast.makeText(getApplicationContext(), radius, Toast.LENGTH_LONG).show();
                     Uri.Builder builder = new Uri.Builder();
                     builder.scheme("http")
                             .encodedAuthority("arvitis.ddns.net:62222")
@@ -166,7 +139,6 @@ public class MapsActivity extends AppCompatActivity implements
                             .appendQueryParameter("radius", radius)
                             .appendQueryParameter("Long", String.valueOf(currentLongitude))
                             .appendQueryParameter("Lat", String.valueOf(currentLatitude));
-                           // .appendQueryParameter("Rating", String.valueOf(ratingBar.getRating()));
                     String URL_UPDATE = builder.build().toString();
                     JsonObjectRequest strReq = new JsonObjectRequest(
                             Request.Method.POST,
@@ -176,7 +148,6 @@ public class MapsActivity extends AppCompatActivity implements
                                 @Override
                                 public void onResponse(JSONObject response) {
                                     Log.d(TAG, "Get users Response: " + response.toString());
-                                  //   Toast.makeText(getApplicationContext(), "volley response: " + response.toString(), Toast.LENGTH_LONG).show();
                                     getinitloc = false;
                                     mGoogleMap.clear();
                                     LatLng mylatLng = new LatLng(currentLatitude, currentLongitude);
@@ -187,10 +158,7 @@ public class MapsActivity extends AppCompatActivity implements
                                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                                     Marker mymarker = mGoogleMap.addMarker(myoptions);
                                     mymarker.setTag("");
-                                    //mGoogleMap.addMarker(myoptions);
                                     mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mylatLng,15));
-                                    // Zoom in, animating the camera.
-                                  //  mGoogleMap.animateCamera(CameraUpdateFactory.zoomIn());
 
                                     try {
                                         JSONArray users = response.getJSONArray("users");
@@ -202,7 +170,6 @@ public class MapsActivity extends AppCompatActivity implements
                                             String Profession = user.getString("Profession");
                                             String uid = user.getString("uid");
                                             LatLng latLng = new LatLng(Double.parseDouble(Lat), Double.parseDouble(Long));
-
                                             MarkerOptions options = new MarkerOptions()
                                                     .position(latLng)
                                                     .title(name)
@@ -210,12 +177,7 @@ public class MapsActivity extends AppCompatActivity implements
                                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                                             Marker marker = mGoogleMap.addMarker(options);
                                             marker.setTag(uid);
-                                            //marker.showInfoWindow();
-                                          // mGoogleMap.addMarker(options);
-                                            //Toast.makeText(getApplicationContext(), name, Toast.LENGTH_LONG).show();
-
                                         }
-                                      //  mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                         Toast.makeText(getApplicationContext(),
@@ -242,20 +204,16 @@ public class MapsActivity extends AppCompatActivity implements
 
         // Logout button click event
         btnLogout.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View view) {
                 logoutUser();
             }
         });
-        //useraddress = getCompleteAddressString(currentLatitude,currentLongitude);
         btnGetLoc.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View view) {
                 uid = session.getuid();
                 if (currentLatitude != 0 && currentLongitude != 0 && !TextUtils.isEmpty(prouid) && !TextUtils.isEmpty(uid)) {
-                   // Toast.makeText(getApplicationContext(), uid.toString(), Toast.LENGTH_LONG).show();
                     Uri.Builder builder = new Uri.Builder();
                     builder.scheme("http")
                             .encodedAuthority("arvitis.ddns.net:62222")
@@ -297,14 +255,9 @@ public class MapsActivity extends AppCompatActivity implements
                     if (TextUtils.isEmpty(uid)) {
                         Toast.makeText(getApplicationContext(), "Your account details have not been stored.Try logging in again!", Toast.LENGTH_LONG).show();
                     }
-                    //Toast.makeText(getApplicationContext(), "userid :" + uid + "prouserid :" + prouid, Toast.LENGTH_LONG).show();
                 }}
         });
-
-
-
     }
-
     @Override
     public void onPause() {
         super.onPause();
@@ -322,8 +275,6 @@ public class MapsActivity extends AppCompatActivity implements
     public void onMapReady(GoogleMap googleMap)
     {
         mGoogleMap = googleMap;
-       // mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this,
@@ -343,8 +294,7 @@ public class MapsActivity extends AppCompatActivity implements
         }
         mGoogleMap.setOnMarkerClickListener(this);
     }
-
-    protected synchronized void buildGoogleApiClient() {
+     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -352,43 +302,21 @@ public class MapsActivity extends AppCompatActivity implements
                 .build();
         mGoogleApiClient.connect();
     }
-
     @Override
     public void onConnected(Bundle bundle) {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(500);
         mLocationRequest.setFastestInterval(500);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
         builder.setAlwaysShow(true);
-
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
-
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        /*if (currentLatitude != 0 && currentLongitude != 0) {
-            double LcurrentLatitude = location.getLatitude();
-            double LcurrentLongitude = location.getLongitude();
-            LatLng latLng = new LatLng(currentLatitude, currentLongitude);
-
-            MarkerOptions options = new MarkerOptions()
-                    .position(latLng)
-                    .title("You are here!")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-            mGoogleMap.addMarker(options);
-            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            address.setText("You are located at (onconnected): " + getCompleteAddressString(LcurrentLatitude, LcurrentLongitude));
-        } else {
-            // Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            // if (location == null)
-            address.setText("Location not available (onconnected)!");
-        }*/
     }
 
 
@@ -400,17 +328,13 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onLocationChanged(Location location) {
-     //   if (enablemapzoom = true) {
             mLastLocation = location;
-
-
             //Place current location marker
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             currentLatitude = location.getLatitude();
             currentLongitude = location.getLongitude();
         if (getinitloc == true && currentLatitude  !=0 && currentLongitude !=0 ) {
             mGoogleMap.clear();
-           // Toast.makeText(getApplicationContext(), "MPIKE", Toast.LENGTH_SHORT).show();
             if (mCurrLocationMarker != null) {
                 mCurrLocationMarker.remove();
             }
@@ -418,29 +342,20 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(latLng)
                     .title("You are here!")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-           // mCurrLocationMarker = mGoogleMap.addMarker(markerOptions);
             Marker mymarker = mGoogleMap.addMarker(markerOptions);
             mymarker.setTag("");
-            //move map camera
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-            // mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mylatLng,15));
-            // Zoom in, animating the camera.
-           // mGoogleMap.animateCamera(CameraUpdateFactory.zoomIn());
             address.setText("You are located at (onlocationchanged): " + getCompleteAddressString(currentLatitude, currentLongitude));
-
         }
-       // }
     }
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
@@ -458,8 +373,6 @@ public class MapsActivity extends AppCompatActivity implements
                         })
                         .create()
                         .show();
-
-
             } else {
                 // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this,
@@ -477,7 +390,6 @@ public class MapsActivity extends AppCompatActivity implements
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
                     // permission was granted, yay! Do the
                     // location-related task you need to do.
                     if (ContextCompat.checkSelfPermission(this,
@@ -489,25 +401,18 @@ public class MapsActivity extends AppCompatActivity implements
                         }
                         mGoogleMap.setMyLocationEnabled(true);
                     }
-
                 } else {
-
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     Toast.makeText(this, "permission denied", Toast.LENGTH_LONG).show();
                 }
                 return;
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
     private void logoutUser() {
         session.setLogin(false,"");
-
         db.deleteUsers();
-
         // Launching the login activity
         Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
         startActivity(intent);
@@ -526,41 +431,28 @@ public class MapsActivity extends AppCompatActivity implements
                     strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
                 }
                 strAdd = strReturnedAddress.toString();
-               // Log.w("My Current loction address", "" + strReturnedAddress.toString());
             } else {
-                //Log.w("My Current loction address", "No Address returned!");
             }
         } catch (Exception e) {
             e.printStackTrace();
-           // Log.w("My Current loction address", "Canont get Address!");
         }
         return strAdd;
     }
     public void addListenerOnRatingBar() {
 
         ratingBar = (RatingBar) findViewById(R.id.ratingBar);
-        //txtRatingValue = (TextView) findViewById(R.id.txtRatingValue);
-
-        //if rating value is changed,
-        //display the current rating value in the result (textview) automatically
         ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                //Toast.makeText(getApplicationContext(), String.valueOf(v), Toast.LENGTH_LONG).show();
             }
-
         });
     }
-
     @Override
     public boolean onMarkerClick(final Marker marker) {
-       // Toast.makeText(getApplicationContext(), "Marker :" + marker.getTag().toString(), Toast.LENGTH_LONG).show();
         prouid = marker.getTag().toString();
         return false;
     }
-
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
-
     }
 }

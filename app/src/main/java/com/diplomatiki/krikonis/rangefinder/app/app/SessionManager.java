@@ -48,9 +48,7 @@ public class SessionManager {
     }
     public void setuid(String uid) {
 
-        //editor.putBoolean(KEY_IS_LOGGEDIN, isLoggedIn);
         editor.putString(KEY_UID, uid);
-        // commit changes
         editor.commit();
 
         Log.d(TAG, "User login session modified!");
